@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>I'm So Sorry, Yesu 🥺</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&family=Gaegu:wght@400;700&family=Patrick+Hand&display=swap" rel="stylesheet">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        craft: '#f4ebd0',
+                        paper: '#fffef9',
+                        tape: 'rgba(240, 190, 190, 0.6)',
+                        blush: '#ffb3ba',
+                        softPink: '#ffdfba',
+                        warmYellow: '#ffffba',
+                        softGreen: '#baffc9',
+                        pastelBlue: '#bae1ff'
+                    },
+                    fontFamily: {
+                        handwriting: ['Caveat', 'cursive'],
+                        gaegu: ['Gaegu', 'cursive'],
+                        patrick: ['Patrick Hand', 'cursive']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom Scrapbook Texture & Styles */
+        body {
+            background-color: #f7f1e5;
+            background-image: radial-gradient(#e2d7c5 1.5px, transparent 1.5px);
+            background-size: 24px 24px;
+            font-family: 'Patrick Hand', cursive;
+            overflow-x: hidden;
+        }
+
+        .paper-texture {
+            background-color: #fffdf7;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+            background-image: linear-gradient(0deg, transparent 24px, #f0ede6 25px);
+            background-size: 100% 25px;
+        }
+
+        .torn-paper {
+            background: #fffefa;
+            position: relative;
+            filter: drop-shadow(2px 4px 8px rgba(0,0,0,0.12));
+        }
+
+        .washi-tape {
+            background-color: rgba(255, 182, 193, 0.75);
+            background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.4) 10px, rgba(255,255,255,0.4) 20px);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .washi-tape-yellow {
+            background-color: rgba(254, 240, 138, 0.75);
+            background-image: repeating-linear-gradient(-45deg, transparent, transparent 8px, rgba(255,255,255,0.5) 8px, rgba(255,255,255,0.5) 16px);
+        }
+
+        .washi-tape-blue {
+            background-color: rgba(186, 230, 253, 0.75);
+        }
+
+        .polaroid {
+            background: white;
+            padding: 12px 12px 40px 12px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.12);
+            transition: transform 0.3s ease;
+        }
+
+        .polaroid:hover {
+            transform: scale(1.03) rotate(0deg) !important;
+            z-index: 20;
+        }
+
+        .sticker {
+            filter: drop-shadow(2px 3px 0px rgba(0,0,0,0.15));
+            transition: transform 0.2s ease;
+        }
+        .sticker:hover {
+            transform: scale(1.15) rotate(5deg);
+        }
+
+        /* Heart Puzzle Canvas Specifics */
+        .puzzle-piece {
+            cursor: grab;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            touch-action: none;
+        }
+        .puzzle-piece:active {
+            cursor: grabbing;
+            transform: scale(1.05);
+            z-index: 30;
+        }
+        .puzzle-slot {
+            border: 2px dashed #fca5a5;
+            background-color: rgba(254, 226, 226, 0.3);
+        }
+
+        /* Floating Hearts Background Animation */
+        @keyframes floatUp {
+            0% { transform: translateY(100vh) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(-100px) rotate(360deg); opacity: 0; }
+        }
+
+        .floating-heart {
+            position: fixed;
+            pointer-events: none;
+            z-index: 0;
+            animation: floatUp 8s linear infinite;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f7f1e5;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #fca5a5;
+            border-radius: 5px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #f87171;
+        }
+
+        /* Dotted stamp border */
+        .stamp-border {
+            border: 4px dashed #f87171;
+            border-radius: 12px;
+        }
+    </style>
+</head>
+<body class="text-gray-800 leading-relaxed selection:bg-pink-200 selection:text-pink-800">
+
+    <!-- Floating Background Hearts Container -->
+    <div id="hearts-bg-container" class="fixed inset-0 pointer-events-none overflow-hidden z-0"></div>
+
+    <!-- Audio Player Toggle -->
+    <div class="fixed top-4 right-4 z-50">
+        <button id="audio-toggle-btn" onclick="toggleAudio()" class="bg-white/80 backdrop-blur border-2 border-pink-300 text-pink-600 px-4 py-2 rounded-full shadow-md hover:bg-pink-50 transition-all flex items-center gap-2 font-handwriting text-xl">
+            <i class="fas fa-music text-pink-500 animate-pulse"></i>
+            <span id="audio-status">Play Soft Music 🎵</span>
+        </button>
+    </div>
+
+    <!-- MAIN SCRAPBOOK CONTAINER -->
+    <div class="max-w-4xl mx-auto px-4 py-8 relative z-10 space-y-24">
+
+        <!-- SECTION 1: HERO SCRAPBOOK TITLE -->
+        <section class="min-h-[85vh] flex flex-col justify-center items-center relative text-center pt-8">
+            <!-- Decorative Washi Tape -->
+            <div class="washi-tape w-48 h-8 absolute -top-2 left-1/2 -translate-x-1/2 -rotate-2 z-20"></div>
+
+            <!-- Paper Cutout Header Container -->
+            <div class="torn-paper p-8 sm:p-12 rounded-3xl max-w-2xl w-full border-2 border-pink-200/50 transform -rotate-1 relative my-8">
+                <!-- Top Corner Stamp -->
+                <div class="absolute -top-6 -right-6 bg-pink-100 text-pink-600 p-3 rounded-full shadow-sm rotate-12 border border-pink-300">
+                    <i class="fas fa-heart text-2xl"></i>
+                </div>
+
+                <!-- Hand-cut letter style Header -->
+                <div class="flex flex-wrap justify-center gap-2 sm:gap-3 mb-6">
+                    <span class="bg-pink-400 text-white font-handwriting text-4xl sm:text-6xl px-4 py-1 rounded-lg transform -rotate-3 shadow-md">I'm</span>
+                    <span class="bg-amber-300 text-amber-900 font-handwriting text-4xl sm:text-6xl px-4 py-1 rounded-lg transform rotate-2 shadow-md">So</span>
+                    <span class="bg-rose-500 text-white font-handwriting text-5xl sm:text-7xl px-5 py-1 rounded-lg transform -rotate-2 shadow-lg font-bold">SORRY</span>
+                    <span class="text-5xl sm:text-7xl align-middle animate-bounce">🥺</span>
+                </div>
+
+                <p class="font-handwriting text-2xl sm:text-3xl text-gray-600 mb-6">
+                    My world isn't complete when you're upset with me...
+                </p>
+
+                <!-- Dotted Note box inside Hero -->
+                <div class="bg-pink-50/60 p-4 rounded-xl border border-dashed border-pink-300 text-gray-700 font-gaegu text-xl sm:text-2xl">
+                    ✨ I created this little scrapbook just to show you how much you mean to me and how truly sorry I am. Scroll down, please? ✨
+                </div>
+
+                <!-- Cute Decorative Stickers -->
+                <div class="absolute -bottom-5 left-8 sticker text-4xl">🌸</div>
+                <div class="absolute -bottom-6 right-10 sticker text-4xl">🩹</div>
+            </div>
+
+            <!-- Scroll Indicator -->
+            <div class="animate-bounce mt-4 flex flex-col items-center gap-1 font-handwriting text-xl text-pink-500">
+                <span>Scroll Down</span>
+                <i class="fas fa-chevron-down"></i>
+            </div>
+        </section>
+
+
+        <!-- SECTION 2: HEART PUZZLE INTERACTIVE SECTION -->
+        <section id="puzzle-section" class="scroll-mt-12">
+            <div class="torn-paper p-6 sm:p-10 rounded-2xl border border-pink-200 relative">
+                <div class="washi-tape-yellow w-36 h-7 absolute -top-3 left-8 rotate-3 z-10"></div>
+                
+                <div class="text-center mb-8">
+                    <span class="bg-pink-100 text-pink-700 font-handwriting text-lg px-3 py-1 rounded-full border border-pink-300">
+                        Interactive Mini-Game 🧩
+                    </span>
+                    <h2 class="font-handwriting text-4xl sm:text-5xl font-bold text-gray-800 mt-2">
+                        Mend My Broken Heart
+                    </h2>
+                    <p class="font-gaegu text-xl text-gray-600">
+                        Drag or click each piece into its place to complete the heart!
+                    </p>
+                </div>
+
+                <!-- Puzzle Box & Slots Container -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center justify-center">
+                    
+                    <!-- TARGET HEART DROP ZONE (2x2 Grid forming a Heart Shape) -->
+                    <div class="flex flex-col items-center">
+                        <div class="text-sm font-handwriting text-gray-500 mb-2">Assemble Heart Here 👇</div>
+                        <div id="heart-target-grid" class="grid grid-cols-2 gap-2 w-64 h-64 bg-pink-50 p-4 rounded-3xl border-2 border-dashed border-pink-300 relative shadow-inner">
+                            
+                            <div data-slot="0" class="puzzle-slot rounded-tl-full flex items-center justify-center relative overflow-hidden transition-all">
+                                <span class="text-xs text-pink-300 pointer-events-none">Top Left</span>
+                            </div>
+                            <div data-slot="1" class="puzzle-slot rounded-tr-full flex items-center justify-center relative overflow-hidden transition-all">
+                                <span class="text-xs text-pink-300 pointer-events-none">Top Right</span>
+                            </div>
+                            <div data-slot="2" class="puzzle-slot rounded-bl-xl flex items-center justify-center relative overflow-hidden transition-all">
+                                <span class="text-xs text-pink-300 pointer-events-none">Bottom Left</span>
+                            </div>
+                            <div data-slot="3" class="puzzle-slot rounded-br-xl flex items-center justify-center relative overflow-hidden transition-all">
+                                <span class="text-xs text-pink-300 pointer-events-none">Bottom Right</span>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- SCATTERED PUZZLE PIECES BANK -->
+                    <div class="bg-amber-50/60 p-6 rounded-2xl border border-amber-200 flex flex-col items-center">
+                        <div class="text-sm font-handwriting text-amber-800 mb-4">Click a piece to place it, or drag it over!</div>
+                        <div id="pieces-bank" class="grid grid-cols-2 gap-4 w-60 min-h-[200px] items-center justify-center">
+                            <!-- Pieces generated dynamically via JS -->
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Puzzle Completion Banner (Hidden by default) -->
+                <div id="puzzle-success-message" class="hidden mt-6 bg-green-100 border-2 border-green-400 text-green-800 p-4 rounded-xl text-center animate-fade-in font-handwriting text-2xl">
+                    💖 You fixed my heart! Thank you so much! Now please keep scrolling... 💖
+                </div>
+            </div>
+        </section>
+
+
+        <!-- SECTION 3: CUTE NOTE FOR "येसु" -->
+        <section id="note-section" class="scroll-mt-12">
+            <div class="relative max-w-2xl mx-auto">
+                
+                <!-- Background Decorative Polaroid Cards Behind -->
+                <div class="polaroid absolute -top-6 -left-6 transform -rotate-6 w-48 hidden sm:block pointer-events-none">
+                    <div class="bg-pink-100 h-36 rounded flex items-center justify-center text-4xl">🧸</div>
+                    <p class="font-handwriting text-center text-gray-600 mt-2">Soft Hugs</p>
+                </div>
+
+                <div class="polaroid absolute -bottom-6 -right-6 transform rotate-6 w-48 hidden sm:block pointer-events-none">
+                    <div class="bg-amber-100 h-36 rounded flex items-center justify-center text-4xl">🌷</div>
+                    <p class="font-handwriting text-center text-gray-600 mt-2">For You Always</p>
+                </div>
+
+                <!-- MAIN NOTE FOR YESU -->
+                <div class="paper-texture p-8 sm:p-12 rounded-2xl border-2 border-amber-200/80 shadow-xl relative z-10">
+                    <!-- Washi Tape Header -->
+                    <div class="washi-tape w-40 h-8 absolute -top-4 left-1/2 -translate-x-1/2 rotate-1"></div>
+
+                    <!-- Note Title -->
+                    <div class="text-center mb-6">
+                        <h2 class="font-handwriting text-5xl sm:text-6xl font-bold text-rose-600 tracking-wide">
+                            Dear <span class="bg-rose-100 px-3 py-1 rounded-xl underline decoration-wavy decoration-rose-400">येसु</span> 💖
+                        </h2>
+                        <div class="text-xs font-mono text-gray-400 mt-1">From the bottom of my heart</div>
+                    </div>
+
+                    <!-- Heartfelt Handwritten Note Text -->
+                    <div class="font-handwriting text-2xl sm:text-3xl text-gray-700 leading-relaxed space-y-4">
+                        <p>
+                            I know I messed up, and I am so, so sorry for causing you any distress or sadness. 
+                        </p>
+                        <p>
+                            You mean the absolute world to me, <strong class="text-rose-600 font-bold">येसु</strong>. Life feels so dull and empty when you're angry or upset with me. 
+                        </p>
+                        <p class="bg-yellow-100/70 p-3 rounded-lg border-l-4 border-yellow-400 italic">
+                            "I promise to listen better, love harder, and never make you feel this way again."
+                        </p>
+                        <p>
+                            Can we please wipe the slate clean and smile again? I miss your sweet smile so much! 🥺✨
+                        </p>
+                    </div>
+
+                    <!-- Cute Signature and Stamps -->
+                    <div class="mt-8 flex justify-between items-end border-t-2 border-dashed border-gray-200 pt-4">
+                        <div class="sticker text-3xl">🎀</div>
+                        <div class="text-right">
+                            <span class="font-gaegu text-xl text-gray-500 block">Forever Yours,</span>
+                            <span class="font-handwriting text-3xl font-bold text-rose-500">Your Biggest Fan 💌</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+
+        <!-- SECTION 4: THE INTERACTIVE "FORGIVE ME?" BUTTON GAME -->
+        <section id="forgive-section" class="scroll-mt-12 min-h-[60vh] flex flex-col justify-center items-center relative">
+            <div class="torn-paper p-8 sm:p-12 rounded-3xl w-full max-w-2xl text-center border-2 border-pink-200 relative overflow-hidden">
+                <div class="washi-tape-blue w-40 h-7 absolute -top-3 right-10 rotate-2"></div>
+
+                <h2 class="font-handwriting text-4xl sm:text-5xl font-bold text-gray-800 mb-2">
+                    Are You Still Angry With Me? 🥺
+                </h2>
+                <p class="font-gaegu text-xl text-gray-600 mb-8">
+                    Choose carefully... (or try to!)
+                </p>
+
+                <!-- BUTTON CONTAINER -->
+                <div id="button-playground" class="relative min-h-[180px] flex flex-wrap items-center justify-center gap-6 p-4">
+                    
+                    <!-- FORGIVE BUTTON (Always friendly and static) -->
+                    <button onclick="handleForgive()" class="z-20 bg-emerald-400 hover:bg-emerald-500 text-white font-handwriting text-3xl px-8 py-4 rounded-2xl shadow-lg transform hover:scale-105 transition-all flex items-center gap-2 border-2 border-emerald-200">
+                        <span>I Forgive You</span>
+                        <span class="text-2xl">💕</span>
+                    </button>
+
+                    <!-- ELUSIVE "NO I AM ANGRY" BUTTON -->
+                    <button id="angry-btn" 
+                            onclick="handleAngryClick()" 
+                            onmouseover="handleAngryHover()"
+                            class="z-30 bg-rose-400 hover:bg-rose-500 text-white font-handwriting text-2xl sm:text-3xl px-6 py-3 rounded-2xl shadow-lg transition-all duration-200 border-2 border-rose-200 whitespace-nowrap">
+                        No, I am angry! 😤
+                    </button>
+
+                </div>
+
+                <div id="game-hint" class="font-gaegu text-sm text-gray-400 mt-4">
+                    Hint: Try clicking the angry button if you dare! 😉
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- MODAL POPUP FOR "I FORGIVE YOU" OR "HUG ME" -->
+    <div id="celebration-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="paper-texture p-8 sm:p-10 rounded-3xl max-w-md w-full text-center relative border-4 border-pink-300 shadow-2xl transform animate-scale-up">
+            <div class="washi-tape w-32 h-6 absolute -top-3 left-1/2 -translate-x-1/2"></div>
+            
+            <div id="modal-icon" class="text-6xl mb-4">🤗</div>
+            <h3 id="modal-title" class="font-handwriting text-4xl font-bold text-rose-600 mb-2">Yay! Best Day Ever!</h3>
+            <p id="modal-body" class="font-gaegu text-2xl text-gray-700 mb-6">
+                Thank you for forgiving me, Yesu! Sending you the warmest, tightest hug right now! 💖✨
+            </p>
+
+            <button onclick="closeModal()" class="bg-pink-500 hover:bg-pink-600 text-white font-handwriting text-2xl px-6 py-2 rounded-xl shadow transition-transform hover:scale-105">
+                Love you so much! 💕
+            </button>
+        </div>
+    </div>
+
+
+    <!-- SCRIPTS FOR INTERACTIVITY -->
+    <script>
+        /* --------------------------------------------------
+         * 1. AUDIO SYNTHESIZER (Web Audio API - Gentle Soft Tone)
+         * -------------------------------------------------- */
+        let audioCtx = null;
+        let isPlaying = false;
+        let intervalId = null;
+
+        function toggleAudio() {
+            const statusText = document.getElementById('audio-status');
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+
+            if (!isPlaying) {
+                audioCtx.resume();
+                isPlaying = true;
+                statusText.innerText = "Playing Melody 🎵";
+                playLofiMelody();
+            } else {
+                isPlaying = false;
+                statusText.innerText = "Play Soft Music 🎵";
+                if (intervalId) clearInterval(intervalId);
+            }
+        }
+
+        // Plays a soft, relaxing lullaby synth loop
+        function playLofiMelody() {
+            const notes = [261.63, 329.63, 392.00, 523.25, 440.00, 349.23, 329.63, 293.66]; // C4, E4, G4, C5, A4, F4, E4, D4
+            let index = 0;
+
+            intervalId = setInterval(() => {
+                if (!isPlaying) return;
+                
+                let osc = audioCtx.createOscillator();
+                let gain = audioCtx.createGain();
+                
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(notes[index % notes.length], audioCtx.currentTime);
+                
+                gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 1.2);
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                osc.start();
+                osc.stop(audioCtx.currentTime + 1.2);
+                
+                index++;
+            }, 600);
+        }
+
+        /* --------------------------------------------------
+         * 2. FLOATING HEARTS GENERATOR
+         * -------------------------------------------------- */
+        function createFloatingHearts() {
+            const container = document.getElementById('hearts-bg-container');
+            const heartIcons = ['💖', '💕', '🌸', '✨', '🧸', '💗'];
+            
+            for (let i = 0; i < 15; i++) {
+                const heart = document.createElement('div');
+                heart.className = 'floating-heart text-2xl select-none';
+                heart.innerText = heartIcons[Math.floor(Math.random() * heartIcons.length)];
+                heart.style.left = `${Math.random() * 100}vw`;
+                heart.style.animationDuration = `${6 + Math.random() * 6}s`;
+                heart.style.animationDelay = `${Math.random() * 5}s`;
+                heart.style.opacity = (0.3 + Math.random() * 0.5).toString();
+                container.appendChild(heart);
+            }
+        }
+
+        /* --------------------------------------------------
+         * 3. HEART PUZZLE LOGIC
+         * -------------------------------------------------- */
+        const puzzleData = [
+            { id: 0, label: 'Top-Left', color: 'bg-rose-400', radius: 'rounded-tl-full' },
+            { id: 1, label: 'Top-Right', color: 'bg-rose-500', radius: 'rounded-tr-full' },
+            { id: 2, label: 'Bottom-Left', color: 'bg-rose-600', radius: 'rounded-bl-xl' },
+            { id: 3, label: 'Bottom-Right', color: 'bg-rose-500', radius: 'rounded-br-xl' }
+        ];
+
+        let placedPieces = 0;
+        let selectedPieceId = null;
+
+        function initPuzzle() {
+            const bank = document.getElementById('pieces-bank');
+            bank.innerHTML = '';
+            
+            // Shuffle pieces for bank
+            const shuffled = [...puzzleData].sort(() => Math.random() - 0.5);
+
+            shuffled.forEach(piece => {
+                const el = document.createElement('div');
+                el.id = `piece-${piece.id}`;
+                el.className = `puzzle-piece w-20 h-20 ${piece.color} ${piece.radius} shadow-md flex items-center justify-center text-white font-handwriting text-lg font-bold border-2 border-white select-none`;
+                el.innerText = `Piece ${piece.id + 1}`;
+                el.draggable = true;
+                
+                // Drag Events
+                el.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('text/plain', piece.id);
+                });
+
+                // Click to Select/Place
+                el.addEventListener('click', () => {
+                    selectOrPlacePiece(piece.id);
+                });
+
+                bank.appendChild(el);
+            });
+
+            // Set up slot drop targets
+            document.querySelectorAll('.puzzle-slot').forEach(slot => {
+                slot.addEventListener('dragover', (e) => e.preventDefault());
+                slot.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    const pieceId = parseInt(e.dataTransfer.getData('text/plain'));
+                    const slotId = parseInt(slot.getAttribute('data-slot'));
+                    placePieceInSlot(pieceId, slotId, slot);
+                });
+
+                slot.addEventListener('click', () => {
+                    if (selectedPieceId !== null) {
+                        const slotId = parseInt(slot.getAttribute('data-slot'));
+                        placePieceInSlot(selectedPieceId, slotId, slot);
+                        selectedPieceId = null;
+                    }
+                });
+            });
+        }
+
+        function selectOrPlacePiece(id) {
+            selectedPieceId = id;
+            // Visual feedback for selection
+            document.querySelectorAll('.puzzle-piece').forEach(p => p.classList.remove('ring-4', 'ring-amber-400'));
+            const selectedEl = document.getElementById(`piece-${id}`);
+            if (selectedEl) selectedEl.classList.add('ring-4', 'ring-amber-400');
+        }
+
+        function placePieceInSlot(pieceId, slotId, slotEl) {
+            if (pieceId === slotId && !slotEl.getAttribute('data-filled')) {
+                const pieceData = puzzleData.find(p => p.id === pieceId);
+                
+                slotEl.innerHTML = '';
+                slotEl.className = `puzzle-slot ${pieceData.color} ${pieceData.radius} flex items-center justify-center text-white font-handwriting text-2xl font-bold shadow-inner border-0 animate-scale-up`;
+                slotEl.innerText = '💖';
+                slotEl.setAttribute('data-filled', 'true');
+
+                // Remove piece from bank
+                const bankEl = document.getElementById(`piece-${pieceId}`);
+                if (bankEl) bankEl.remove();
+
+                placedPieces++;
+
+                // Trigger confetti for piece success
+                confetti({ particleCount: 20, spread: 40, origin: { y: 0.6 } });
+
+                if (placedPieces === 4) {
+                    document.getElementById('puzzle-success-message').classList.remove('hidden');
+                    confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+                }
+            }
+        }
+
+        /* --------------------------------------------------
+         * 4. ELUSIVE "NO I AM ANGRY" BUTTON GAME LOGIC
+         * -------------------------------------------------- */
+        let angryIteration = 0;
+
+        const angryTexts = [
+            "No, I am angry! 😤",
+            "Please 🥺",
+            "Please Please 🥺🥺",
+            "Please Please Please 🥺🥺🥺",
+            "Please Please Please Please 🥺🥺🥺🥺",
+            "Hug me, babe! 🤗💖"
+        ];
+
+        function handleAngryClick() {
+            advanceAngryState();
+        }
+
+        function handleAngryHover() {
+            // Shift position on hover only during iterations 1 to 4
+            if (angryIteration >= 1 && angryIteration < 5) {
+                shiftAngryButtonPosition();
+            }
+        }
+
+        function advanceAngryState() {
+            angryIteration++;
+            const btn = document.getElementById('angry-btn');
+
+            if (angryIteration < 5) {
+                // Update text with increasing 'Please'
+                btn.innerText = angryTexts[angryIteration];
+                shiftAngryButtonPosition();
+            } else if (angryIteration >= 5) {
+                // Final 5th Iteration: Lock at Center & Change to Hug Me!
+                btn.style.position = 'relative';
+                btn.style.left = '0px';
+                btn.style.top = '0px';
+                btn.className = "z-30 bg-pink-500 hover:bg-pink-600 text-white font-handwriting text-3xl px-8 py-4 rounded-2xl shadow-xl border-4 border-pink-200 transform hover:scale-110 transition-all animate-bounce";
+                btn.innerText = angryTexts[5];
+                
+                // Clicking "Hug me, babe!" opens the Hug Modal
+                btn.onclick = () => {
+                    openModal("🤗 Warmest Hug For You!", "I love you so much Yesu! Thank you for making my heart full again!");
+                };
+            }
+        }
+
+        function shiftAngryButtonPosition() {
+            const btn = document.getElementById('angry-btn');
+            const container = document.getElementById('button-playground');
+            
+            // Set fixed or absolute positioning within container bounds
+            btn.style.position = 'absolute';
+
+            const containerRect = container.getBoundingClientRect();
+            const maxX = Math.max(20, containerRect.width - btn.offsetWidth - 20);
+            const maxY = Math.max(20, containerRect.height - btn.offsetHeight - 20);
+
+            const randomX = Math.floor(Math.random() * maxX);
+            const randomY = Math.floor(Math.random() * maxY);
+
+            btn.style.left = `${randomX}px`;
+            btn.style.top = `${randomY}px`;
+        }
+
+        function handleForgive() {
+            openModal("Yay! Thank You Yesu! 💕", "You have the kindest heart! I promise to make it up to you with endless love & sweet treats!");
+        }
+
+        /* --------------------------------------------------
+         * 5. MODAL CONTROL
+         * -------------------------------------------------- */
+        function openModal(title, text) {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-body').innerText = text;
+            document.getElementById('celebration-modal').classList.remove('hidden');
+
+            // Celebration Confetti
+            confetti({
+                particleCount: 120,
+                spread: 80,
+                origin: { y: 0.5 }
+            });
+        }
+
+        function closeModal() {
+            document.getElementById('celebration-modal').classList.add('hidden');
+        }
+
+        // Initialize Everything on Load
+        window.onload = function() {
+            createFloatingHearts();
+            initPuzzle();
+        };
+    </script>
+</body>
+</html>
